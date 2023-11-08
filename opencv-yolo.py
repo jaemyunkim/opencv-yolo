@@ -1,21 +1,27 @@
 import os
+import requests
+from pathlib import Path
 import numpy as np
 import cv2
 
+from utils import get_yolo_weights
+
 
 def main():
+    YOLO_MODEL = "yolov3"
+    YOLO_DATA = "coco"
+
+    # get yolo model files
+    get_yolo_weights(YOLO_MODEL)
+
+    # initialize YOLO model
+    net, classes, output_layers = initialize(YOLO_MODEL, YOLO_DATA)
+    colors = np.random.uniform(0, 255, size=(len(classes), 3))
+
+    # read image
     image = cv2.imread("samples/image1.jpg")
     img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     height, width, channels = image.shape
-
-    # load YOLOv3 
-    net = cv2.dnn.readNet("models/yolov3.weights", "models/yolov3.cfg")
-    classes = []
-    with open("models/coco.names", "r") as f:
-        classes = [line.strip() for line in f.readlines()]
-    layer_names = net.getLayerNames()
-    output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
-    colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
     # prepare run the detection
     blob = cv2.dnn.blobFromImage(img, 1/256, (416, 416), (0, 0, 0), swapRB=True, crop=False)
@@ -41,10 +47,23 @@ def main():
             cv2.rectangle(resImg, (x, y), ((x + w), (y + h)), color, 2)
             cv2.putText(resImg, label + " " + confidence, (x, y + 20), font, 2, (0, 255, 0), 2)
 
-    # cv2.imshow("resImg", resImg)
+    # write the result to a file
     cv2.imwrite("result.png", resImg)
     cv2.waitKey(1)
-    # cv2.destroyAllWindows()
+
+
+def initialize(yolo_model, yolo_data):
+    yolo_model = yolo_model.lower()
+    yolo_data = yolo_data.lower()
+
+    net = cv2.dnn.readNet(f"models/{yolo_model}.weights", f"models/{yolo_model}.cfg")
+    classes = []
+    with open(f"models/{yolo_data}.names", "r") as f:
+        classes = [line.strip() for line in f.readlines()]
+    layer_names = net.getLayerNames()
+    output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
+
+    return net, classes, output_layers
 
 
 def postprocessing(outs, size):
