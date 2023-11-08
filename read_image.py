@@ -6,10 +6,10 @@ from opencv_yolo import initialize, predict, drawPred
 
 
 def main():
-    filename = "samples/bus.jpg"
+    filename = "samples/image2.jpg"
     resize_ratio = 0.66
 
-    img = cv2.imread("samples/bus.jpg")
+    img = cv2.imread(filename)
     img = cv2.resize(img, None, fx=resize_ratio, fy=resize_ratio)
     cv2.imshow("img", img)
     cv2.waitKey(1)
