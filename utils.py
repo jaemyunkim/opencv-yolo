@@ -21,16 +21,19 @@ def get_yolo_weights(model_name):
         print(f"not found the currect model name: {model_name}")
 
     # download model files
-    get_file_from_url(urls, "models")
+    return get_file_from_url(urls, "models")
 
 
 def get_file_from_url(urls, local_path = ""):
     local_path = Path(local_path)
+    filenames = []
 
     # download model files
     for url in urls:
         # obtain filename by splitting url and getting  
         target_file = local_path / f"{Path(url).name}"
+        filenames.append(target_file)
+
         if not target_file.exists():
             target_file.parent.mkdir(parents=True, exist_ok=True)   # create directory
             
@@ -56,3 +59,5 @@ def get_file_from_url(urls, local_path = ""):
             print(f"download file: {str(target_file)}")
         else:
             print(f"found file: {str(target_file)}")
+
+    return filenames
