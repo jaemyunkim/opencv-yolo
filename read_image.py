@@ -16,7 +16,7 @@ def main():
 
     # select yolo model
     YOLO_MODEL = "yolov3"
-    YOLO_DATA = "coco"    
+    YOLO_DATA = "coco"
 
     # initialize YOLO model
     net, classes, output_layers = initialize(YOLO_MODEL, YOLO_DATA)
