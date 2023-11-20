@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 def get_yolo_weights(model_name):
     model_name = model_name.lower()
+    input_size = [416, 416]
 
     # select YOLO version
     if model_name.startswith("yolov1"):
@@ -17,11 +18,20 @@ def get_yolo_weights(model_name):
             f"https://pjreddie.com/media/files/{model_name}.weights", # weights
             f"https://github.com/pjreddie/darknet/raw/master/cfg/{model_name}.cfg", # cfg
         ]
+        input_size = [416, 416]
+    elif model_name.startswith("yolov5"):
+        urls = [
+            f"https://github.com/ultralytics/yolov5/releases/download/v7.0/{model_name}.onnx"
+        ]
+        input_size = [640, 640]
     else:
         print(f"not found the currect model name: {model_name}")
+        input_size = [0, 0]
 
     # download model files
-    return get_file_from_url(urls, "models")
+    get_file_from_url(urls, "models")
+
+    return input_size
 
 
 def get_file_from_url(urls, local_path = ""):
