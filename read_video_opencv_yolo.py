@@ -20,7 +20,6 @@ def main():
     resize_ratio = 0.66
     
     # select yolo model
-    YOLO_MODEL = "yolov3"
     YOLO_MODEL = "yolov5s"
     YOLO_DATA = "coco"
 

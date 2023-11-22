@@ -19,6 +19,13 @@ def get_yolo_weights(model_name):
             f"https://github.com/pjreddie/darknet/raw/master/cfg/{model_name}.cfg", # cfg
         ]
         input_size = [416, 416]
+    elif model_name.startswith("yolov4"):
+        urls = [
+            f"https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights",
+            f"https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.cfg",
+
+        ]
+        input_size = [416, 416]
     elif model_name.startswith("yolov5"):
         urls = [
             f"https://github.com/ultralytics/yolov5/releases/download/v7.0/{model_name}.onnx"
