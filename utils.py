@@ -9,11 +9,7 @@ def get_yolo_weights(model_name):
     input_size = [416, 416]
 
     # select YOLO version
-    if model_name.startswith("yolov1"):
-        pass
-    elif model_name.startswith("yolov2"):
-        pass
-    elif model_name.startswith("yolov3"):
+    if model_name.startswith("yolov1") or model_name.startswith("yolov2") or model_name.startswith("yolov3"):
         urls = [
             f"https://pjreddie.com/media/files/{model_name}.weights", # weights
             f"https://github.com/pjreddie/darknet/raw/master/cfg/{model_name}.cfg", # cfg
