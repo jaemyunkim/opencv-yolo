@@ -18,7 +18,7 @@ def main():
     resize_ratio = 0.66
 
     count = 0
-    while(cap.isOpened()):
+    while cap.isOpened():
         ret, frame = cap.read()
         if ret:
             count += 1

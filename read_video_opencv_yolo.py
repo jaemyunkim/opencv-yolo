@@ -20,14 +20,14 @@ def main():
     resize_ratio = 0.66
     
     # select yolo model
-    YOLO_MODEL = "yolov5s"
+    YOLO_MODEL = "yolov5m"
     YOLO_DATA = "coco"
 
     # initialize YOLO model
     od = opencv_yolo(YOLO_MODEL, YOLO_DATA)
 
     count = 0
-    while(cap.isOpened()):
+    while cap.isOpened():
         ret, frame = cap.read()
         if ret:
             count += 1
