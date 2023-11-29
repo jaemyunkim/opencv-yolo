@@ -33,24 +33,44 @@ def main():
 
 class opencv_yolo:
     def __init__(self, model_name, data_name):
-        self.model_name = model_name.lower()
-        self.data_name = data_name.lower()
+        self._model_name = model_name.lower()
+        self._data_name = data_name.lower()
 
-        self.colors = []
+        self._classes = []
+        self._colors = []
+        self.reset_class_filter()
 
         # get yolo model files
-        self.input_width, self.input_height = get_yolo_weights(self.model_name)
+        self._input_width, self._input_height = get_yolo_weights(self._model_name)
 
         # initialize yolo
-        self._initialize(self.model_name, self.data_name)
+        self._output_layers = ()
+        self._initialize()
 
-        self.font = cv2.FONT_HERSHEY_SIMPLEX
-        self.colors = np.random.uniform(0, 255, size=(len(self.classes), 3))
+        self._outs = ()
+        self._class_ids = []
+        self._confidences = []
+        self._boxes = []
+        self._indexes = []
 
+        self._font = cv2.FONT_HERSHEY_SIMPLEX
+        self._colors = np.random.uniform(0, 255, size=(len(self._classes), 3))
+
+
+    def classes(self):
+        return self._classes
+    
+
+    def class_filter(self, classes = []):
+        pass
+
+
+    def reset_class_filter(self):
+        self._class_filter = []
+    
 
     def predict(self, image):
-        self.image = image.copy()
-        self.height, self.width = image.shape[:2]
+        self._height, self._width = image.shape[:2]
 
         # revert channels
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -61,42 +81,42 @@ class opencv_yolo:
         self.net.setInput(blob)
 
         # run the forward pass to get a predict result
-        self.outs = self.net.forward(self.output_layers)
+        self._outs = self.net.forward(self._output_layers)
         
         # post-processing
         self.postprocessing()
 
 
-    def _initialize(self, model_name, data_name):
-        self.classes = []
-        with open(f"models/{data_name}.names", "r") as f:
-            self.classes = [line.strip() for line in f.readlines()]
+    def _initialize(self):
+        self._classes = []
+        with open(f"models/{self._data_name}.names", "r") as f:
+            self._classes = [line.strip() for line in f.readlines()]
 
         # load yolo model
-        if model_name.startswith("yolov5"):
-            self.net = cv2.dnn.readNet(f"models/{model_name}.onnx")
+        if self._model_name.startswith("yolov5"):
+            self.net = cv2.dnn.readNet(f"models/{self._model_name}.onnx")
         else:
-            self.net = cv2.dnn.readNet(f"models/{model_name}.weights", f"models/{model_name}.cfg")
-        layer_names = self.net.getLayerNames()
-        # self.output_layers = [layer_names[i - 1] for i in self.net.getUnconnectedOutLayers()]
-        self.output_layers = self.net.getUnconnectedOutLayersNames()
+            self.net = cv2.dnn.readNet(f"models/{self._model_name}.weights", f"models/{self._model_name}.cfg")
+        # layer_names = self.net.getLayerNames()
+        # self._output_layers = [layer_names[i - 1] for i in self.net.getUnconnectedOutLayers()]
+        self._output_layers = self.net.getUnconnectedOutLayersNames()
 
 
     def postprocessing(self):
-        self.class_ids = []
-        self.confidences = []
-        self.boxes = []
-
-        if self.model_name.startswith("yolov5"):
+        self._boxes = []
+        self._confidences = []
+        self._class_ids = []
+    
+        if self._model_name.startswith("yolov5"):
             self._postprocessing_recent_yolo()
         else:
             self._postprocessing_original_yolo()
 
-        self.indexes = cv2.dnn.NMSBoxes(self.boxes, self.confidences, 0.5, 0.4)
+        self._indexes = cv2.dnn.NMSBoxes(self._boxes, self._confidences, 0.5, 0.4)
 
 
     def _postprocessing_original_yolo(self):
-        for out in self.outs:
+        for out in self._outs:
             for detection in out:
                 scores = detection[5:]
                 class_id = np.argmax(scores)
@@ -104,25 +124,25 @@ class opencv_yolo:
                 
                 if confidence > 0.5:
                     # Object detection
-                    center_x = int(detection[0] * self.width)
-                    center_y = int(detection[1] * self.height)
-                    w = int(detection[2] * self.width)
-                    h = int(detection[3] * self.height)
+                    center_x = int(detection[0] * self._width)
+                    center_y = int(detection[1] * self._height)
+                    w = int(detection[2] * self._width)
+                    h = int(detection[3] * self._height)
 
                     # coordinate
                     x = int(center_x - w / 2)
                     y = int(center_y - h / 2)
-                    self.boxes.append([x, y, w, h])
-                    self.confidences.append(float(confidence))
-                    self.class_ids.append(class_id)
+                    self._boxes.append([x, y, w, h])
+                    self._confidences.append(float(confidence))
+                    self._class_ids.append(class_id)
 
     
     def _postprocessing_recent_yolo(self):
-        outs = self.outs[0]
-        x_factor = self.width / self.input_width
-        y_factor = self.height / self.input_height
+        outs = self._outs[0]
+        x_factor = self._width / self._input_width
+        y_factor = self._height / self._input_height
 
-        for detection in self.outs[0][0]:
+        for detection in self._outs[0][0]:
             confidence = detection[4]
 
             # Discard bad detections and continue.
@@ -137,19 +157,19 @@ class opencv_yolo:
                     y = int((cy - h / 2) * y_factor)    # right
                     w = int(w * x_factor)
                     h = int(h * y_factor)
-                    self.boxes.append([x, y, w, h])
-                    self.confidences.append(float(confidence))
-                    self.class_ids.append(class_id)
+                    self._boxes.append([x, y, w, h])
+                    self._confidences.append(float(confidence))
+                    self._class_ids.append(class_id)
 
 
     def drawPred(self, image):
-        if len(self.indexes) > 0:
-            for i in self.indexes.flatten():
-                x, y, w, h = self.boxes[i]
-                print(x, y, w, h)
-                label = str(self.classes[self.class_ids[i]])
-                confidence = str(round(self.confidences[i], 2))
-                color = self.colors[self.class_ids[i]]
+        if len(self._indexes) > 0:
+            for i in self._indexes.flatten():
+                x, y, w, h = self._boxes[i]
+                # print(x, y, w, h)
+                label = str(self._classes[self._class_ids[i]])
+                confidence = str(round(self._confidences[i], 2))
+                color = self._colors[self._class_ids[i]]
                 # color = colors[i]
                 cv2.rectangle(image, (x, y), ((x + w), (y + h)), color, 2)
 
@@ -157,12 +177,10 @@ class opencv_yolo:
                 text = label + " " + confidence
                 fontScale = 0.5
                 thickness = 1
-                size, baseline = cv2.getTextSize(text, self.font, fontScale, thickness)
+                size, baseline = cv2.getTextSize(text, self._font, fontScale, thickness)
                 cv2.rectangle(image, (x, y), (textLoc[0] + size[0], y + baseline + size[1]), color, -1)
                 textColor = [0, 0, 0] if np.average(color) > 127 else [255, 255, 255]
-                cv2.putText(image, text, textLoc, self.font, fontScale, textColor, thickness)
-
-                
+                cv2.putText(image, text, textLoc, self._font, fontScale, textColor, thickness)
 
 
 if __name__ == "__main__":
