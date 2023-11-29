@@ -58,15 +58,15 @@ class opencv_yolo:
 
 
     def classes(self):
-        return self._classes
+        return self._classes.copy()
     
 
     def class_filter(self, classes = []):
-        pass
+        self._class_filter = classes.copy()
 
 
     def reset_class_filter(self):
-        self._class_filter = []
+        self._class_filter = self._classes.copy()
     
 
     def predict(self, image):
@@ -91,6 +91,7 @@ class opencv_yolo:
         self._classes = []
         with open(f"models/{self._data_name}.names", "r") as f:
             self._classes = [line.strip() for line in f.readlines()]
+            self._class_filter = self._classes.copy()
 
         # load yolo model
         if self._model_name.startswith("yolov5"):
@@ -121,7 +122,7 @@ class opencv_yolo:
                 scores = detection[5:]
                 class_id = np.argmax(scores)
                 confidence = scores[class_id]
-                
+
                 if confidence > 0.5:
                     # Object detection
                     center_x = int(detection[0] * self._width)
@@ -168,19 +169,22 @@ class opencv_yolo:
                 x, y, w, h = self._boxes[i]
                 # print(x, y, w, h)
                 label = str(self._classes[self._class_ids[i]])
-                confidence = str(round(self._confidences[i], 2))
-                color = self._colors[self._class_ids[i]]
-                # color = colors[i]
-                cv2.rectangle(image, (x, y), ((x + w), (y + h)), color, 2)
+                
+                if label in self._class_filter:
 
-                textLoc = (x, y + 15)
-                text = label + " " + confidence
-                fontScale = 0.5
-                thickness = 1
-                size, baseline = cv2.getTextSize(text, self._font, fontScale, thickness)
-                cv2.rectangle(image, (x, y), (textLoc[0] + size[0], y + baseline + size[1]), color, -1)
-                textColor = [0, 0, 0] if np.average(color) > 127 else [255, 255, 255]
-                cv2.putText(image, text, textLoc, self._font, fontScale, textColor, thickness)
+                    confidence = str(round(self._confidences[i], 2))
+                    color = self._colors[self._class_ids[i]]
+                    # color = colors[i]
+                    cv2.rectangle(image, (x, y), ((x + w), (y + h)), color, 2)
+
+                    textLoc = (x, y + 15)
+                    text = label + " " + confidence
+                    fontScale = 0.5
+                    thickness = 1
+                    size, baseline = cv2.getTextSize(text, self._font, fontScale, thickness)
+                    cv2.rectangle(image, (x, y), (textLoc[0] + size[0], y + baseline + size[1]), color, -1)
+                    textColor = [0, 0, 0] if np.average(color) > 127 else [255, 255, 255]
+                    cv2.putText(image, text, textLoc, self._font, fontScale, textColor, thickness)
 
 
 if __name__ == "__main__":
