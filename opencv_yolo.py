@@ -152,7 +152,17 @@ class opencv_yolo:
                 color = self.colors[self.class_ids[i]]
                 # color = colors[i]
                 cv2.rectangle(image, (x, y), ((x + w), (y + h)), color, 2)
-                cv2.putText(image, label + " " + confidence, (x, y + 15), self.font, 0.5, (0, 255, 0), 1)
+
+                textLoc = (x, y + 15)
+                text = label + " " + confidence
+                fontScale = 0.5
+                thickness = 1
+                size, baseline = cv2.getTextSize(text, self.font, fontScale, thickness)
+                cv2.rectangle(image, (x, y), (textLoc[0] + size[0], y + baseline + size[1]), color, -1)
+                textColor = [0, 0, 0] if np.average(color) > 127 else [255, 255, 255]
+                cv2.putText(image, text, textLoc, self.font, fontScale, textColor, thickness)
+
+                
 
 
 if __name__ == "__main__":
